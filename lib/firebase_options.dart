@@ -41,48 +41,62 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDdBIl3ee6A7kMa2Oq3cf2_g7b_ZCHFWwc',
-    appId: '1:79209380711:web:3ca7c1f99521fb5512cdc2',
-    messagingSenderId: '79209380711',
-    projectId: 'bolsa-de-empleo-sgema',
-    authDomain: 'bolsa-de-empleo-sgema.firebaseapp.com',
-    storageBucket: 'bolsa-de-empleo-sgema.firebasestorage.app',
-    measurementId: 'G-TM5D983E5W',
+    apiKey: "AIzaSyB5qR18wnSJhVKAugcHVyIO64Om3VnBVnw",
+    authDomain: "bdempleo-2c46c.firebaseapp.com",
+    databaseURL:
+        "https://bdempleo-2c46c-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "bdempleo-2c46c",
+    storageBucket: "bdempleo-2c46c.firebasestorage.app",
+    messagingSenderId: "930180343463",
+    appId: "1:930180343463:web:013d925ec3b6129b3add82",
+    measurementId: "G-66WY728BB7",
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBIjqCWM2XIRwqG_-1H11X2k2f6Q1IolpU',
-    appId: '1:79209380711:android:65154aea9fa940ae12cdc2',
-    messagingSenderId: '79209380711',
-    projectId: 'bolsa-de-empleo-sgema',
-    storageBucket: 'bolsa-de-empleo-sgema.firebasestorage.app',
+    apiKey: "AIzaSyB5qR18wnSJhVKAugcHVyIO64Om3VnBVnw",
+    authDomain: "bdempleo-2c46c.firebaseapp.com",
+    databaseURL:
+        "https://bdempleo-2c46c-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "bdempleo-2c46c",
+    storageBucket: "bdempleo-2c46c.firebasestorage.app",
+    messagingSenderId: "930180343463",
+    appId: "1:930180343463:web:013d925ec3b6129b3add82",
+    measurementId: "G-66WY728BB7",
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCN4i6cZXwcbVTRGm4AJjLL6X4r4b-wwYE',
-    appId: '1:79209380711:ios:0b37d56ddf0765dd12cdc2',
-    messagingSenderId: '79209380711',
-    projectId: 'bolsa-de-empleo-sgema',
-    storageBucket: 'bolsa-de-empleo-sgema.firebasestorage.app',
-    iosBundleId: 'com.example.appAlumnos',
+    apiKey: "AIzaSyB5qR18wnSJhVKAugcHVyIO64Om3VnBVnw",
+    authDomain: "bdempleo-2c46c.firebaseapp.com",
+    databaseURL:
+        "https://bdempleo-2c46c-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "bdempleo-2c46c",
+    storageBucket: "bdempleo-2c46c.firebasestorage.app",
+    messagingSenderId: "930180343463",
+    appId: "1:930180343463:web:013d925ec3b6129b3add82",
+    measurementId: "G-66WY728BB7",
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCN4i6cZXwcbVTRGm4AJjLL6X4r4b-wwYE',
-    appId: '1:79209380711:ios:0b37d56ddf0765dd12cdc2',
-    messagingSenderId: '79209380711',
-    projectId: 'bolsa-de-empleo-sgema',
-    storageBucket: 'bolsa-de-empleo-sgema.firebasestorage.app',
-    iosBundleId: 'com.example.appAlumnos',
+    apiKey: "AIzaSyB5qR18wnSJhVKAugcHVyIO64Om3VnBVnw",
+    authDomain: "bdempleo-2c46c.firebaseapp.com",
+    databaseURL:
+        "https://bdempleo-2c46c-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "bdempleo-2c46c",
+    storageBucket: "bdempleo-2c46c.firebasestorage.app",
+    messagingSenderId: "930180343463",
+    appId: "1:930180343463:web:013d925ec3b6129b3add82",
+    measurementId: "G-66WY728BB7",
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDdBIl3ee6A7kMa2Oq3cf2_g7b_ZCHFWwc',
-    appId: '1:79209380711:web:78db3bdd20a5439a12cdc2',
-    messagingSenderId: '79209380711',
-    projectId: 'bolsa-de-empleo-sgema',
-    authDomain: 'bolsa-de-empleo-sgema.firebaseapp.com',
-    storageBucket: 'bolsa-de-empleo-sgema.firebasestorage.app',
-    measurementId: 'G-NKYDVZFGRD',
+    apiKey: "AIzaSyB5qR18wnSJhVKAugcHVyIO64Om3VnBVnw",
+    authDomain: "bdempleo-2c46c.firebaseapp.com",
+    databaseURL:
+        "https://bdempleo-2c46c-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "bdempleo-2c46c",
+    storageBucket: "bdempleo-2c46c.firebasestorage.app",
+    messagingSenderId: "930180343463",
+    appId: "1:930180343463:web:013d925ec3b6129b3add82",
+    measurementId: "G-66WY728BB7",
   );
 }
