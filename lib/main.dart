@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -161,7 +163,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nombreController = TextEditingController();
-  String _ciclo = 'DAM';
+  String _ciclo = 'Técnico superior en Desarrollo de Aplicaciones Web';
   bool _isLoading = false;
 
   Future<void> _registrarse() async {
@@ -223,17 +225,34 @@ class _RegistroScreenState extends State<RegistroScreen> {
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
               initialValue: _ciclo,
-              items: ['DAM', 'DAW', 'ASIR', 'SMR']
-                  .map(
-                    (c) => DropdownMenuItem(
-                      value: c,
-                      child: Text(
-                        c,
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  )
-                  .toList(),
+              items:
+                  [
+                        'Técnico superior en Desarrollo de Aplicaciones Web',
+                        'Técnico superior en Desarrollo de Aplicaciones Multiplataforma',
+                        'Técnico superior en Administración de Sistemas Informáticos en Red',
+                        'Técnico superior en Gestión de Alojamientos Turísticos en Madrid',
+                        'Técnico superior en Administración y Finanzas en Madrid',
+                        'Técnico superior en Enseñanza y Animación Sociodeportiva',
+                        'Técnico superior en Acondicionamiento Físico',
+                        'Técnico superior en Radioterapia y Dosimetría',
+                        'Técnico superior en Imagen para el Diagnóstico y Medicina Nuclear',
+                        'Técnico superior en Educación Infantil',
+                        'Técnico en Sistemas Microinformáticos y Redes',
+                        'Técnico en Gestión Administrativa',
+                        'Técnico en Guía en el Medio Natural y de Tiempo Libre',
+                        'Técnico en Cuidados Auxiliares de Enfermería',
+                        'Técnico en Emergencias Sanitarias',
+                      ]
+                      .map(
+                        (c) => DropdownMenuItem(
+                          value: c,
+                          child: Text(
+                            c,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      )
+                      .toList(),
               dropdownColor: const Color(0xFF333333),
               onChanged: (v) => setState(() => _ciclo = v!),
               decoration: const InputDecoration(labelText: "Ciclo"),
@@ -272,23 +291,83 @@ class PantallaPrincipal extends StatefulWidget {
 }
 
 class _PantallaPrincipalState extends State<PantallaPrincipal> {
-  int _indiceActual = 0; // 0 = Ofertas, 1 = Agenda
+  int _indiceActual = 0; // 0 = Ofertas, 1 = Agenda, 2 = Perfil
+
+  late StreamSubscription<QuerySnapshot> _eventosSub;
+  late StreamSubscription<QuerySnapshot> _ofertasSub;
+  bool _primerEvento = true;
+  bool _primerOferta = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _suscribirNotificaciones();
+  }
+
+  void _suscribirNotificaciones() {
+    _eventosSub = FirebaseFirestore.instance
+        .collection('eventos')
+        .snapshots()
+        .listen((snapshot) {
+          if (_primerEvento) {
+            _primerEvento = false;
+            return;
+          }
+          for (final change in snapshot.docChanges) {
+            if (change.type == DocumentChangeType.added) {
+              _mostrarNotificacion('Se ha publicado un evento.');
+            }
+          }
+        }, onError: (_) {});
+
+    _ofertasSub = FirebaseFirestore.instance
+        .collection('ofertas')
+        .where('activa', isEqualTo: true)
+        .where('target_ciclos', arrayContains: widget.cicloAlumno)
+        .snapshots()
+        .listen((snapshot) {
+          if (_primerOferta) {
+            _primerOferta = false;
+            return;
+          }
+          for (final change in snapshot.docChanges) {
+            if (change.type == DocumentChangeType.added) {
+              _mostrarNotificacion('Se ha publicado una oferta para tu ciclo.');
+            }
+          }
+        }, onError: (_) {});
+  }
+
+  void _mostrarNotificacion(String mensaje) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensaje), duration: const Duration(seconds: 3)),
+    );
+  }
+
+  @override
+  void dispose() {
+    _eventosSub.cancel();
+    _ofertasSub.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Lista de pantallas para cambiar
     final List<Widget> pantallas = [
-      ListaOfertasTab(cicloAlumno: widget.cicloAlumno), // Pestaña 0
-      const ListaEventosTab(), // Pestaña 1
+      ListaOfertasTab(cicloAlumno: widget.cicloAlumno),
+      const ListaEventosTab(),
+      PerfilTab(cicloAlumno: widget.cicloAlumno),
     ];
 
     return Scaffold(
-      // AppBar dinámico según la pestaña
       appBar: AppBar(
         title: Text(
           _indiceActual == 0
               ? 'Ofertas ${widget.cicloAlumno} 💼'
-              : 'Agenda Eventos 📅',
+              : _indiceActual == 1
+              ? 'Agenda Eventos 📅'
+              : 'Mi perfil',
         ),
         actions: [
           IconButton(
@@ -312,8 +391,151 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.work), label: "Empleo"),
           BottomNavigationBarItem(icon: Icon(Icons.event), label: "Agenda"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Mi perfil"),
         ],
       ),
+    );
+  }
+}
+
+class PerfilTab extends StatefulWidget {
+  final String cicloAlumno;
+  const PerfilTab({super.key, required this.cicloAlumno});
+
+  @override
+  State<PerfilTab> createState() => _PerfilTabState();
+}
+
+class _PerfilTabState extends State<PerfilTab> {
+  static const List<String> grados = [
+    'Técnico superior en Desarrollo de Aplicaciones Web',
+    'Técnico superior en Desarrollo de Aplicaciones Multiplataforma',
+    'Técnico superior en Administración de Sistemas Informáticos en Red',
+    'Técnico superior en Gestión de Alojamientos Turísticos en Madrid',
+    'Técnico superior en Administración y Finanzas en Madrid',
+    'Técnico superior en Enseñanza y Animación Sociodeportiva',
+    'Técnico superior en Acondicionamiento Físico',
+    'Técnico superior en Radioterapia y Dosimetría',
+    'Técnico superior en Imagen para el Diagnóstico y Medicina Nuclear',
+    'Técnico superior en Educación Infantil',
+    'Técnico en Sistemas Microinformáticos y Redes',
+    'Técnico en Gestión Administrativa',
+    'Técnico en Guía en el Medio Natural y de Tiempo Libre',
+    'Técnico en Cuidados Auxiliares de Enfermería',
+    'Técnico en Emergencias Sanitarias',
+  ];
+
+  Future<void> _mostrarDialogoEdicion(String actual) async {
+    String seleccionado = actual;
+    if (!grados.contains(seleccionado)) {
+      seleccionado = grados.first;
+    }
+    await showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Modificar perfil'),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return DropdownButtonFormField<String>(
+                dropdownColor: const Color(0xFF333333),
+                value: seleccionado,
+                items: grados
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) setState(() => seleccionado = v);
+                },
+                decoration: const InputDecoration(labelText: 'Grado'),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  await FirebaseFirestore.instance
+                      .collection('usuarios')
+                      .doc(user.uid)
+                      .update({'ciclo': seleccionado});
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Grado actualizado.')),
+                    );
+                  }
+                }
+                if (mounted) Navigator.pop(context);
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Center(child: Text('No hay usuario autenticado.'));
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(user.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error cargando perfil.'));
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final nombre = data['nombre'] ?? 'Sin nombre';
+        final correo = data['email'] ?? user.email ?? 'Sin correo';
+        final grado = data['ciclo'] ?? 'Sin grado';
+
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Mi perfil',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.cyanAccent,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Nombre: $nombre', style: const TextStyle(fontSize: 18)),
+              const SizedBox(height: 8),
+              Text('Correo: $correo', style: const TextStyle(fontSize: 18)),
+              const SizedBox(height: 8),
+              Text('Grado: $grado', style: const TextStyle(fontSize: 18)),
+              const SizedBox(height: 25),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.cyanAccent,
+                  foregroundColor: Colors.black,
+                ),
+                onPressed: () => _mostrarDialogoEdicion(grado),
+                child: const Text('Cambiar Grado'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
