@@ -22,22 +22,12 @@ class MyApp extends StatelessWidget {
       title: 'Bolsa Empleo SGema',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
-        primaryColor: Colors.cyanAccent,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          selectedItemColor: Colors.cyanAccent,
-          unselectedItemColor: Colors.grey,
-          backgroundColor: Colors.black,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFF2C2C2C),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          labelStyle: const TextStyle(color: Colors.white70),
+        primaryColor: Colors.blueAccent,
+        scaffoldBackgroundColor: const Color(0xFF0D47A1),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.blue,
         ),
       ),
-      // CAMBIO: Ahora la pantalla inicial es el Login
       home: const LoginScreen(),
     );
   }

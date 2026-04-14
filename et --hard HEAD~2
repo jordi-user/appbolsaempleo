@@ -1,0 +1,8 @@
+[33m87013a4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: reset: moving to HEAD~3
+[33md627a3c[m HEAD@{1}: reset: moving to HEAD~3
+[33m7ede092[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{2}: commit: selección multiple
+[33m53ebdca[m HEAD@{3}: pull: Merge made by the 'ort' strategy.
+[33mfc85f5d[m HEAD@{4}: commit: Actualización de logo Santa Gema y limpieza de configuración
+[33md627a3c[m HEAD@{5}: pull: Fast-forward
+[33m9638022[m HEAD@{6}: commit: firebase
+[33m87013a4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{7}: clone: from https://github.com/jordi-user/appbolsaempleo.git
