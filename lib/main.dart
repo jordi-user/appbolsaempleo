@@ -282,16 +282,40 @@ class PantallaPrincipal extends StatefulWidget {
 
 class _PantallaPrincipalState extends State<PantallaPrincipal> {
   int _indiceActual = 0; // 0 = Ofertas, 1 = Agenda, 2 = Perfil
+  String _cicloActual = '';
 
   late StreamSubscription<QuerySnapshot> _eventosSub;
   late StreamSubscription<QuerySnapshot> _ofertasSub;
+  late StreamSubscription<DocumentSnapshot> _usuarioSub;
   bool _primerEvento = true;
   bool _primerOferta = true;
 
   @override
   void initState() {
     super.initState();
+    _cicloActual = widget.cicloAlumno;
     _suscribirNotificaciones();
+    _suscribirCambioGrado();
+  }
+
+  void _suscribirCambioGrado() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _usuarioSub = FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(user.uid)
+          .snapshots()
+          .listen((snapshot) {
+            if (snapshot.exists && snapshot.data() != null) {
+              final nuevoCiclo = snapshot.data()!['ciclo'] as String?;
+              if (nuevoCiclo != null && nuevoCiclo != _cicloActual) {
+                setState(() {
+                  _cicloActual = nuevoCiclo;
+                });
+              }
+            }
+          });
+    }
   }
 
   void _suscribirNotificaciones() {
@@ -339,22 +363,23 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   void dispose() {
     _eventosSub.cancel();
     _ofertasSub.cancel();
+    _usuarioSub.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> pantallas = [
-      ListaOfertasTab(cicloAlumno: widget.cicloAlumno),
+      ListaOfertasTab(cicloAlumno: _cicloActual),
       const ListaEventosTab(),
-      PerfilTab(cicloAlumno: widget.cicloAlumno),
+      PerfilTab(cicloAlumno: _cicloActual),
     ];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           _indiceActual == 0
-              ? 'Ofertas ${widget.cicloAlumno} 💼'
+              ? 'Ofertas $_cicloActual 💼'
               : _indiceActual == 1
               ? 'Agenda Eventos 📅'
               : 'Mi perfil',
@@ -533,49 +558,90 @@ class _PerfilTabState extends State<PerfilTab> {
 // ==========================================
 // 4. PESTAÑA OFERTAS (Antigua ListaOfertasScreen)
 // ==========================================
-class ListaOfertasTab extends StatelessWidget {
+class ListaOfertasTab extends StatefulWidget {
   final String cicloAlumno;
   const ListaOfertasTab({super.key, required this.cicloAlumno});
 
   @override
+  State<ListaOfertasTab> createState() => _ListaOfertasTabState();
+}
+
+class _ListaOfertasTabState extends State<ListaOfertasTab> {
+  late Stream<QuerySnapshot> _ofertasStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _actualizarStream();
+  }
+
+  void _actualizarStream() {
+    _ofertasStream = FirebaseFirestore.instance
+        .collection('ofertas')
+        .where('target_ciclos', arrayContains: widget.cicloAlumno)
+        .where('activa', isEqualTo: true)
+        .snapshots();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: FirebaseFirestore.instance
-          .collection('ofertas')
-          .where('target_ciclos', arrayContains: cicloAlumno)
-          .where('activa', isEqualTo: true)
-          .snapshots(),
+      stream: _ofertasStream,
       builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (!snapshot.hasData)
           return const Center(child: CircularProgressIndicator());
         if (snapshot.data!.docs.isEmpty)
-          return const Center(child: Text("No hay ofertas activas."));
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("No hay ofertas activas.", style: TextStyle(fontSize: 16)),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("Ver nuevas ofertas"),
+                  onPressed: () {
+                    setState(() {
+                      _actualizarStream();
+                    });
+                  },
+                ),
+              ],
+            ),
+          );
 
-        return ListView(
-          children: snapshot.data!.docs.map((doc) {
-            var data = doc.data() as Map<String, dynamic>;
-            return Card(
-              margin: const EdgeInsets.all(8),
-              color: const Color(0xFF1E1E1E),
-              child: ListTile(
-                title: Text(
-                  data['titulo'] ?? '',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.cyanAccent,
+        return RefreshIndicator(
+          onRefresh: () async {
+            setState(() {
+              _actualizarStream();
+            });
+          },
+          child: ListView(
+            children: snapshot.data!.docs.map((doc) {
+              var data = doc.data() as Map<String, dynamic>;
+              return Card(
+                margin: const EdgeInsets.all(8),
+                color: const Color(0xFF1E1E1E),
+                child: ListTile(
+                  title: Text(
+                    data['titulo'] ?? '',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.cyanAccent,
+                    ),
+                  ),
+                  subtitle: Text(data['empresa'] ?? ''),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DetalleOfertaScreen(data: data),
+                    ),
                   ),
                 ),
-                subtitle: Text(data['empresa'] ?? ''),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => DetalleOfertaScreen(data: data),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         );
       },
     );
