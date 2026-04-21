@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'firebase_options.dart';
+import 'screens/chat_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,32 +51,31 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _iniciarSesion() async {
     setState(() => _isLoading = true);
     try {
-      final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-
-      // Buscamos el ciclo del usuario
-      final doc = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(cred.user!.uid)
-          .get();
-      if (!doc.exists) throw Exception("Usuario sin perfil");
-
-      final ciclo = doc.get('ciclo');
-
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PantallaPrincipal(cicloAlumno: ciclo),
-          ),
-        );
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          final doc = await FirebaseFirestore.instance
+              .collection('usuarios')
+              .doc(user.uid)
+              .get();
+          final ciclo = doc.data()?['ciclo'] ?? 'Desconocido';
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => PantallaPrincipal(cicloAlumno: ciclo),
+            ),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -84,185 +84,76 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.lock_person, size: 80, color: Colors.cyanAccent),
-              const SizedBox(height: 20),
-              const Text(
-                "Bolsa SGema",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 30),
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-              ),
-              const SizedBox(height: 15),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: "Contraseña"),
-              ),
-              const SizedBox(height: 30),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.cyanAccent,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.all(15),
-                        ),
-                        onPressed: _iniciarSesion,
-                        child: const Text("ENTRAR"),
-                      ),
-                    ),
-              TextButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RegistroScreen()),
-                ),
-                child: const Text(
-                  "Crear cuenta",
-                  style: TextStyle(color: Colors.cyanAccent),
-                ),
-              ),
-            ],
+      body: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ==========================================
-// 2. REGISTRO
-// ==========================================
-class RegistroScreen extends StatefulWidget {
-  const RegistroScreen({super.key});
-  @override
-  State<RegistroScreen> createState() => _RegistroScreenState();
-}
-
-class _RegistroScreenState extends State<RegistroScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _nombreController = TextEditingController();
-  String _ciclo = 'Técnico superior en Desarrollo de Aplicaciones Web';
-  bool _isLoading = false;
-
-  Future<void> _registrarse() async {
-    setState(() => _isLoading = true);
-    try {
-      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-      await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(cred.user!.uid)
-          .set({
-            'nombre': _nombreController.text.trim(),
-            'email': _emailController.text.trim(),
-            'ciclo': _ciclo,
-            'fecha_registro': DateTime.now(),
-          });
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PantallaPrincipal(cicloAlumno: _ciclo),
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Registro")),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _nombreController,
-              decoration: const InputDecoration(labelText: "Nombre"),
-            ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: "Email"),
-            ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "Contraseña"),
-            ),
-            const SizedBox(height: 15),
-            DropdownButtonFormField<String>(
-              initialValue: _ciclo,
-              items:
-                  [
-                        'Técnico superior en Desarrollo de Aplicaciones Web',
-                        'Técnico superior en Desarrollo de Aplicaciones Multiplataforma',
-                        'Técnico superior en Administración de Sistemas Informáticos en Red',
-                        'Técnico superior en Gestión de Alojamientos Turísticos en Madrid',
-                        'Técnico superior en Administración y Finanzas en Madrid',
-                        'Técnico superior en Enseñanza y Animación Sociodeportiva',
-                        'Técnico superior en Acondicionamiento Físico',
-                        'Técnico superior en Radioterapia y Dosimetría',
-                        'Técnico superior en Imagen para el Diagnóstico y Medicina Nuclear',
-                        'Técnico superior en Educación Infantil',
-                        'Técnico en Sistemas Microinformáticos y Redes',
-                        'Técnico en Gestión Administrativa',
-                        'Técnico en Guía en el Medio Natural y de Tiempo Libre',
-                        'Técnico en Cuidados Auxiliares de Enfermería',
-                        'Técnico en Emergencias Sanitarias',
-                      ]
-                      .map(
-                        (c) => DropdownMenuItem(
-                          value: c,
-                          child: Text(
-                            c,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      )
-                      .toList(),
-              dropdownColor: const Color(0xFF333333),
-              onChanged: (v) => setState(() => _ciclo = v!),
-              decoration: const InputDecoration(labelText: "Ciclo"),
-            ),
-            const SizedBox(height: 30),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.cyanAccent,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.all(15),
-                      ),
-                      onPressed: _registrarse,
-                      child: const Text("REGISTRARME"),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.work_outline, size: 80, color: Colors.white),
+                const SizedBox(height: 20),
+                const Text(
+                  'Bolsa Empleo SGema',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    hintText: 'Email',
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-          ],
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'Contraseña',
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.blueAccent,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 50,
+                      vertical: 15,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: _iniciarSesion,
+                  child: const Text('ENTRAR'),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -270,7 +161,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
 }
 
 // ==========================================
-// 3. PANTALLA PRINCIPAL (CON PESTAÑAS) - NUEVO
+// 2. PANTALLA PRINCIPAL (Con pestañas)
 // ==========================================
 class PantallaPrincipal extends StatefulWidget {
   final String cicloAlumno;
@@ -672,41 +563,40 @@ class _ListaEventosTabState extends State<ListaEventosTab> {
 
   Future<void> _toggleAsistencia(String eventoId, bool asistir) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Debes iniciar sesión para registrar asistencia.'),
-          ),
-        );
-      }
-      return;
-    }
+    if (user == null) return;
 
-    final eventoRef = FirebaseFirestore.instance
-        .collection('eventos')
-        .doc(eventoId);
+    final eventoRef = FirebaseFirestore.instance.collection('eventos').doc(eventoId);
+    // Esta es la subcolección que el chat necesita para dejarte entrar
+    final attendeeRef = eventoRef.collection('attendees').doc(user.uid);
+
     await FirebaseFirestore.instance.runTransaction((tx) async {
       final snapshot = await tx.get(eventoRef);
       if (!snapshot.exists) return;
+
       final data = snapshot.data() as Map<String, dynamic>? ?? {};
-      final asistentesUsuarios = List<String>.from(
-        data['asistentes_usuarios'] ?? [],
-      );
+      final asistentesUsuarios = List<String>.from(data['asistentes_usuarios'] ?? []);
+
       if (asistir) {
         if (!asistentesUsuarios.contains(user.uid)) {
           asistentesUsuarios.add(user.uid);
         }
+        // CREA EL REGISTRO PARA EL CHAT
+        tx.set(attendeeRef, {
+          'userName': user.email?.split('@')[0] ?? 'Vicente',
+          'joinedAt': FieldValue.serverTimestamp(),
+        });
       } else {
         asistentesUsuarios.remove(user.uid);
+        // BORRA EL REGISTRO (Ya no puedes chatear)
+        tx.delete(attendeeRef);
       }
+
       tx.update(eventoRef, {
         'asistentes_usuarios': asistentesUsuarios,
         'asistentes': asistentesUsuarios.length,
       });
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
@@ -952,6 +842,32 @@ class _ListaEventosTabState extends State<ListaEventosTab> {
                           ),
                         ],
                       ),
+                      if (isAsistiendo) ...[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purpleAccent,
+                              foregroundColor: Colors.white,
+                            ),
+                            icon: const Icon(Icons.chat),
+                            label: const Text("ENTRAR AL CHAT DEL EVENTO"),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChatPage(
+                                    eventId: doc.id,
+                                    userId: currentUser!.uid,
+                                    userName: currentUser.email?.split('@')[0] ?? 'Usuario',
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                       const Divider(color: Colors.grey, height: 20),
 
                       // Descripción
