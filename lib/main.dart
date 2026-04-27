@@ -433,6 +433,7 @@ class _PerfilTabState extends State<PerfilTab> {
         final nombre = data['nombre'] ?? 'Sin nombre';
         final correo = data['email'] ?? user.email ?? 'Sin correo';
         final grado = data['ciclo'] ?? 'Sin grado';
+        const versionApp = "1.0.0+1";
 
         return Padding(
           padding: const EdgeInsets.all(20),
@@ -461,6 +462,13 @@ class _PerfilTabState extends State<PerfilTab> {
                 ),
                 onPressed: () => _mostrarDialogoEdicion(grado),
                 child: const Text('Cambiar Grado'),
+              ),
+              const Spacer(),
+              const Center(
+                child: Text(
+                  'App Bolsa Empleo SGema - Versión $versionApp',
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
               ),
             ],
           ),
