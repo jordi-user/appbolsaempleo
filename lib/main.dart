@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'firebase_options.dart';
 import 'screens/chat_page.dart';
+import 'screens/registro_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.work_outline, size: 80, color: Colors.white),
+                const Icon(Icons.account_circle, size: 100, color: Colors.white),
                 const SizedBox(height: 20),
                 const Text(
                   'Bolsa Empleo SGema',
@@ -112,6 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.email, color: Colors.white70),
                     hintText: 'Email',
                     filled: true,
                     fillColor: Colors.white.withOpacity(0.1),
@@ -125,6 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.lock, color: Colors.white70),
                     hintText: 'Contraseña',
                     filled: true,
                     fillColor: Colors.white.withOpacity(0.1),
@@ -136,21 +139,42 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 30),
                 _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.blueAccent,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 50,
-                      vertical: 15,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  onPressed: _iniciarSesion,
-                  child: const Text('ENTRAR'),
-                ),
+                    : Column(
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.blueAccent,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 50,
+                                vertical: 15,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            onPressed: _iniciarSesion,
+                            child: const Text('ENTRAR'),
+                          ),
+                          const SizedBox(height: 15),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const RegistroScreen()),
+                              );
+                            },
+                            child: const Text(
+                              '¿No tienes cuenta? REGÍSTRATE AQUÍ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
               ],
             ),
           ),
@@ -447,7 +471,7 @@ class _PerfilTabState extends State<PerfilTab> {
 }
 
 // ==========================================
-// 4. PESTAÑA OFERTAS (Antigua ListaOfertasScreen)
+// 4. PESTAÑA OFERTAS
 // ==========================================
 class ListaOfertasTab extends StatefulWidget {
   final String cicloAlumno;
@@ -479,27 +503,9 @@ class _ListaOfertasTabState extends State<ListaOfertasTab> {
     return StreamBuilder(
       stream: _ofertasStream,
       builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        if (!snapshot.hasData)
-          return const Center(child: CircularProgressIndicator());
-        if (snapshot.data!.docs.isEmpty)
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("No hay ofertas activas.", style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.refresh),
-                  label: const Text("Ver nuevas ofertas"),
-                  onPressed: () {
-                    setState(() {
-                      _actualizarStream();
-                    });
-                  },
-                ),
-              ],
-            ),
-          );
+        if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (snapshot.data!.docs.isEmpty) return const Center(child: Text("No hay ofertas activas."));
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -540,7 +546,7 @@ class _ListaOfertasTabState extends State<ListaOfertasTab> {
 }
 
 // ==========================================
-// 5. PESTAÑA EVENTOS (NUEVA 📅)
+// 5. PESTAÑA EVENTOS
 // ==========================================
 class ListaEventosTab extends StatefulWidget {
   const ListaEventosTab({super.key});
@@ -566,7 +572,6 @@ class _ListaEventosTabState extends State<ListaEventosTab> {
     if (user == null) return;
 
     final eventoRef = FirebaseFirestore.instance.collection('eventos').doc(eventoId);
-    // Esta es la subcolección que el chat necesita para dejarte entrar
     final attendeeRef = eventoRef.collection('attendees').doc(user.uid);
 
     await FirebaseFirestore.instance.runTransaction((tx) async {
@@ -580,14 +585,12 @@ class _ListaEventosTabState extends State<ListaEventosTab> {
         if (!asistentesUsuarios.contains(user.uid)) {
           asistentesUsuarios.add(user.uid);
         }
-        // CREA EL REGISTRO PARA EL CHAT
         tx.set(attendeeRef, {
-          'userName': user.email?.split('@')[0] ?? 'Vicente',
+          'userName': user.email?.split('@')[0] ?? 'Usuario',
           'joinedAt': FieldValue.serverTimestamp(),
         });
       } else {
         asistentesUsuarios.remove(user.uid);
-        // BORRA EL REGISTRO (Ya no puedes chatear)
         tx.delete(attendeeRef);
       }
 
@@ -597,77 +600,18 @@ class _ListaEventosTabState extends State<ListaEventosTab> {
       });
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: _eventosStream,
       builder: (context, snapshot) {
-        // Manejo de errores
-        if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 60, color: Colors.red),
-                const SizedBox(height: 16),
-                Text(
-                  "Error al cargar eventos: ${snapshot.error}",
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => setState(() {}),
-                  child: const Text("Reintentar"),
-                ),
-              ],
-            ),
-          );
-        }
+        if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (snapshot.data!.docs.isEmpty) return const Center(child: Text("No hay eventos programados."));
 
-        // Cargando
-        if (!snapshot.hasData) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text("Cargando eventos..."),
-              ],
-            ),
-          );
-        }
-
-        // Sin eventos
-        if (snapshot.data!.docs.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.event_available_outlined,
-                  size: 60,
-                  color: Colors.grey,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "No hay eventos programados. 😴",
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => setState(() {}),
-                  child: const Text("Actualizar"),
-                ),
-              ],
-            ),
-          );
-        }
-
-        // Listar eventos
         return RefreshIndicator(
           onRefresh: () async {
-            // Forzar actualización del stream
             setState(() {
               _eventosStream = FirebaseFirestore.instance
                   .collection('eventos')
@@ -679,46 +623,18 @@ class _ListaEventosTabState extends State<ListaEventosTab> {
             children: snapshot.data!.docs.map((doc) {
               var data = doc.data() as Map<String, dynamic>;
               final currentUser = FirebaseAuth.instance.currentUser;
-              final asistentesUsuarios = List<String>.from(
-                data['asistentes_usuarios'] ?? [],
-              );
-              final asistentesCount = (data['asistentes'] is num
-                  ? (data['asistentes'] as num).toInt()
-                  : asistentesUsuarios.length);
-              final isAsistiendo =
-                  currentUser != null &&
-                  asistentesUsuarios.contains(currentUser.uid);
+              final asistentesUsuarios = List<String>.from(data['asistentes_usuarios'] ?? []);
+              final asistentesCount = (data['asistentes'] is num ? (data['asistentes'] as num).toInt() : asistentesUsuarios.length);
+              final isAsistiendo = currentUser != null && asistentesUsuarios.contains(currentUser.uid);
 
-              // Convertir fecha
               String fechaBonita = 'Fecha pendiente';
-              try {
-                if (data['fecha'] != null) {
-                  final fecha = data['fecha'];
-                  if (fecha is String) {
-                    fechaBonita = fecha;
-                  } else if (fecha is Timestamp) {
-                    // Convertir como Timestamp de Firestore
-                    final dateTime = fecha.toDate();
-                    const meses = [
-                      'enero',
-                      'febrero',
-                      'marzo',
-                      'abril',
-                      'mayo',
-                      'junio',
-                      'julio',
-                      'agosto',
-                      'septiembre',
-                      'octubre',
-                      'noviembre',
-                      'diciembre',
-                    ];
-                    fechaBonita =
-                        '${dateTime.day} de ${meses[dateTime.month - 1]} de ${dateTime.year}';
-                  }
+              if (data['fecha'] != null) {
+                if (data['fecha'] is Timestamp) {
+                  final dateTime = (data['fecha'] as Timestamp).toDate();
+                  fechaBonita = "${dateTime.day}/${dateTime.month}/${dateTime.year}";
+                } else {
+                  fechaBonita = data['fecha'].toString();
                 }
-              } catch (e) {
-                fechaBonita = 'Fecha no disponible';
               }
 
               return Card(
@@ -733,74 +649,24 @@ class _ListaEventosTabState extends State<ListaEventosTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Título
                       Text(
                         data['titulo'] ?? 'Evento',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.purpleAccent,
-                        ),
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.purpleAccent),
                       ),
                       const SizedBox(height: 12),
-
-                      // Ponente
                       Row(
                         children: [
-                          const Icon(
-                            Icons.person,
-                            size: 18,
-                            color: Colors.cyanAccent,
-                          ),
+                          const Icon(Icons.person, size: 18, color: Colors.cyanAccent),
                           const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              data['ponente'] ?? 'Por definir',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.cyanAccent,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Fecha
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.access_time,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              fechaBonita,
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ),
+                          Text(data['ponente'] ?? 'Por definir', style: const TextStyle(color: Colors.cyanAccent)),
                         ],
                       ),
                       const SizedBox(height: 8),
-
-                      // Ubicación
                       Row(
                         children: [
-                          const Icon(
-                            Icons.location_on,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
+                          const Icon(Icons.access_time, size: 16, color: Colors.grey),
                           const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              data['lugar'] ?? 'Online',
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ),
+                          Text(fechaBonita, style: const TextStyle(color: Colors.grey)),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -809,48 +675,19 @@ class _ListaEventosTabState extends State<ListaEventosTab> {
                           Checkbox(
                             value: isAsistiendo,
                             onChanged: (valor) {
-                              if (valor != null) {
-                                _toggleAsistencia(doc.id, valor);
-                              }
+                              if (valor != null) _toggleAsistencia(doc.id, valor);
                             },
                             activeColor: Colors.cyanAccent,
                           ),
-                          Expanded(
-                            child: Text(
-                              isAsistiendo
-                                  ? 'Asistiré a este evento'
-                                  : 'Marcaré que voy a asistir',
-                              style: const TextStyle(color: Colors.white70),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.purpleAccent.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '$asistentesCount asistentes',
-                              style: const TextStyle(
-                                color: Colors.purpleAccent,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                          const Expanded(child: Text("Asistiré a este evento")),
+                          Text('$asistentesCount asistentes', style: const TextStyle(color: Colors.purpleAccent)),
                         ],
                       ),
-                      if (isAsistiendo) ...[
-                        const SizedBox(height: 8),
+                      if (isAsistiendo)
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purpleAccent,
-                              foregroundColor: Colors.white,
-                            ),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.purpleAccent),
                             icon: const Icon(Icons.chat),
                             label: const Text("ENTRAR AL CHAT DEL EVENTO"),
                             onPressed: () {
@@ -867,18 +704,8 @@ class _ListaEventosTabState extends State<ListaEventosTab> {
                             },
                           ),
                         ),
-                      ],
-                      const Divider(color: Colors.grey, height: 20),
-
-                      // Descripción
-                      Text(
-                        data['descripcion'] ?? 'Sin descripción',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                          height: 1.5,
-                        ),
-                      ),
+                      const Divider(),
+                      Text(data['descripcion'] ?? 'Sin descripción'),
                     ],
                   ),
                 ),
@@ -900,9 +727,7 @@ class DetalleOfertaScreen extends StatelessWidget {
 
   Future<void> _abrirEnlace(BuildContext context, String link) async {
     if (link.isEmpty) return;
-    Uri uri = link.contains('@')
-        ? Uri(scheme: 'mailto', path: link)
-        : Uri.parse(link.startsWith('http') ? link : 'https://$link');
+    Uri uri = link.contains('@') ? Uri(scheme: 'mailto', path: link) : Uri.parse(link.startsWith('http') ? link : 'https://$link');
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {}
@@ -917,33 +742,16 @@ class DetalleOfertaScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              data['titulo'],
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Colors.cyanAccent,
-              ),
-            ),
-            Text(
-              data['empresa'],
-              style: const TextStyle(fontSize: 18, color: Colors.white70),
-            ),
+            Text(data['titulo'], style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
+            Text(data['empresa'], style: const TextStyle(fontSize: 18, color: Colors.white70)),
             const Divider(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Text(data['descripcion'] ?? ''),
-              ),
-            ),
+            Expanded(child: SingleChildScrollView(child: Text(data['descripcion'] ?? ''))),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.send),
                 label: const Text("CONTACTAR"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.cyanAccent,
-                  foregroundColor: Colors.black,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.cyanAccent, foregroundColor: Colors.black),
                 onPressed: () => _abrirEnlace(context, data['link'] ?? ''),
               ),
             ),
