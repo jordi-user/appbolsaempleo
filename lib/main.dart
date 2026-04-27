@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Bolsa Empleo SGema',
+      title: 'SGema Connect',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         primaryColor: Colors.blueAccent,
@@ -99,14 +99,33 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.account_circle, size: 100, color: Colors.white),
+                // Logo moderno: Lupa con Maletín (SGema Connect)
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Transform.translate(
+                      offset: const Offset(15, 12), // Sincroniza la lupa con el maletín
+                      child: Icon(
+                        Icons.search_rounded,
+                        size: 150,
+                        color: Colors.white.withOpacity(0.3),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.business_center_rounded,
+                      size: 55,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Bolsa Empleo SGema',
+                  'SGema Connect',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
+                    letterSpacing: 1.2,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -466,7 +485,7 @@ class _PerfilTabState extends State<PerfilTab> {
               const Spacer(),
               const Center(
                 child: Text(
-                  'App Bolsa Empleo SGema - Versión $versionApp',
+                  'SGema Connect - Versión $versionApp',
                   style: TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ),
