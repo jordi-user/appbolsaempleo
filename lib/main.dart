@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   alignment: Alignment.center,
                   children: [
                     Transform.translate(
-                      offset: const Offset(15, 12), // Sincroniza la lupa con el maletín
+                      offset: const Offset(15, 12),
                       child: Icon(
                         Icons.search_rounded,
                         size: 150,
@@ -313,9 +313,9 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       appBar: AppBar(
         title: Text(
           _indiceActual == 0
-              ? 'Ofertas $_cicloActual 💼'
+              ? 'Ofertas $_cicloActual'
               : _indiceActual == 1
-              ? 'Agenda Eventos 📅'
+              ? 'Agenda Eventos'
               : 'Mi perfil',
         ),
         actions: [
