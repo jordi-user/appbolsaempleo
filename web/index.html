@@ -31,8 +31,20 @@
 
   <title>app_alumnos</title>
   <link rel="manifest" href="manifest.json">
+  
+  <!-- Firebase Messaging Service Worker -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js"></script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
+  
+  <!-- Firebase Messaging initialization -->
+  <script>
+    // Espera a que Flutter esté listo
+    window.addEventListener('flutter-ready', function() {
+      console.log('Flutter listo para notificaciones');
+    });
+  </script>
 </body>
 </html>

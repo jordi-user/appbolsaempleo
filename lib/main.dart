@@ -4,14 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'firebase_options.dart';
 import 'screens/chat_page.dart';
 import 'screens/registro_screen.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // Inicializar servicio de notificaciones FCM (sin await para no bloquear)
+  NotificationService.initialize().catchError((e) {
+    print('Error en notificaciones: $e');
+  });
+  
   runApp(const MyApp());
 }
 
@@ -246,6 +254,8 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 setState(() {
                   _cicloActual = nuevoCiclo;
                 });
+                // Actualizar suscripciones de notificaciones FCM
+                NotificationService.actualizarSuscripcionCiclo(nuevoCiclo);
               }
             }
           });
@@ -322,6 +332,8 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
+              // Eliminar token FCM antes de cerrar sesión
+              await NotificationService.eliminarToken();
               await FirebaseAuth.instance.signOut();
               if (mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
