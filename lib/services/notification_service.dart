@@ -8,13 +8,23 @@ class NotificationService {
 
   // Inicializar permisos y obtener token
   static Future<void> initialize() async {
-    // Solo inicializar en plataformas soportadas
     if (kIsWeb) {
       await _initializeWeb();
       return;
     }
     
     await _initializeMobile();
+  }
+
+  // Configurar handler para mensajes en segundo plano
+  static void setupBackgroundHandler() {
+    FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
+  }
+
+  // Manejar mensajes cuando la app está en segundo plano
+  static Future<void> _handleBackgroundMessage(RemoteMessage message) async {
+    print('Mensaje recibido en segundo plano: ${message.notification?.title}');
+    print('Datos: ${message.data}');
   }
 
   // Inicialización para web
@@ -58,27 +68,43 @@ class NotificationService {
   // Inicialización para mobile
   static Future<void> _initializeMobile() async {
     try {
-      NotificationSettings settings = await _firebaseMessaging.requestPermission(
-        alert: true,
-        announcement: true,
-        badge: true,
-        carPlay: true,
-        criticalAlert: true,
-        provisional: true,
-        sound: true,
-      );
+      // Configurar handler de segundo plano
+      setupBackgroundHandler();
+      
+      // Obtener token inicial
+      String? token = await _firebaseMessaging.getToken();
+      if (token != null) {
+        print('Token FCM: $token');
+        await _guardarTokenFCM(token);
+      }
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional) {
-        String? token = await _firebaseMessaging.getToken();
-        if (token != null) {
-          await _guardarTokenFCM(token);
-        }
+      // Suscribir a temas
+      await _suscribirATemas();
 
-        await _suscribirATemas();
+      // Manejar cuando la app se abre desde una notificación
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+      
+      // Verificar si hay mensaje inicial (app была cerrada)
+      final initialMessage = await _firebaseMessaging.getInitialMessage();
+      if (initialMessage != null) {
+        _handleMessageOpenedApp(initialMessage);
       }
     } catch (e) {
       print('Error inicializando notificaciones mobile: $e');
+    }
+  }
+
+  // Manejar cuando el usuario toca la notificación
+  static void _handleMessageOpenedApp(RemoteMessage message) {
+    print('Notificación tocada: ${message.notification?.title}');
+    
+    final data = message.data;
+    final tipo = data['tipo'];
+    
+    if (tipo == 'evento') {
+      print('Navegar a evento: ${data['eventoId']}');
+    } else if (tipo == 'oferta') {
+      print('Navegar a oferta: ${data['ofertaId']}');
     }
   }
 
@@ -130,12 +156,6 @@ class NotificationService {
         .replaceAll(RegExp(r'[^a-z0-9]'), '_')
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_|_\$'), '');
-  }
-
-  // Mostrar notificación local cuando la app está abierta
-  static void _mostrarNotificacionLocal(RemoteMessage message) {
-    // Los mensajes se manejan automáticamente cuando la app está en foreground
-    // gracias a la configuración en main.dart
   }
 
   // Actualizar suscripción cuando cambia el ciclo del usuario
