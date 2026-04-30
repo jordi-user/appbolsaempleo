@@ -1,1 +1,7 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"bolsa-de-empleo-sgema","appId":"1:79209380711:android:65154aea9fa940ae12cdc2","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"bolsa-de-empleo-sgema","configurations":{"android":"1:79209380711:android:65154aea9fa940ae12cdc2","ios":"1:79209380711:ios:0b37d56ddf0765dd12cdc2","macos":"1:79209380711:ios:0b37d56ddf0765dd12cdc2","web":"1:79209380711:web:3ca7c1f99521fb5512cdc2","windows":"1:79209380711:web:78db3bdd20a5439a12cdc2"}}}},"functions":{"source":"functions"}}}
+{
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20",
+    "serviceAccount": "firebase-adminsdk@bdempleo-2c46c.iam.gserviceaccount.com"
+  },
+  "flutter":{"platforms":{"android":{"default":{"projectId":"bolsa-de-empleo-sgema","appId":"1:79209380711:android:65154aea9fa940ae12cdc2","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"bolsa-de-empleo-sgema","configurations":{"android":"1:79209380711:android:65154aea9fa940ae12cdc2","ios":"1:79209380711:ios:0b37d56ddf0765dd12cdc2","macos":"1:79209380711:ios:0b37d56ddf0765dd12cdc2","web":"1:79209380711:web:3ca7c1f99521fb5512cdc2","windows":"1:79209380711:web:78db3bdd20a5439a12cdc2"}}}},"functions":{"source":"functions"}}}
