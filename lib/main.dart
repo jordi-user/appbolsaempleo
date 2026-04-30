@@ -496,9 +496,26 @@ class _PerfilTabState extends State<PerfilTab> {
               ),
               const Spacer(),
               const Center(
-                child: Text(
-                  'SGema Connect - Versión $versionApp',
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'SGema Connect - Versión $versionApp',
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'App desarrollada por los estudiantes de\nDesarrollo de Aplicaciones Multiplataforma\ndel instituto Santa Gema Galgani',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white38, fontSize: 10),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Pablo Lorente, Vicente Sanchez, Jordi Topanta',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white38, fontSize: 10, fontStyle: FontStyle.italic),
+                    ),
+                  ],
                 ),
               ),
             ],
