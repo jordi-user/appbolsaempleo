@@ -16,6 +16,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(email.trim());
+  }
+
   static const List<String> gradosDisponibles = [
     'Técnico superior en Desarrollo de Aplicaciones Web',
     'Técnico superior en Desarrollo de Aplicaciones Multiplataforma',
@@ -37,11 +42,20 @@ class _RegistroScreenState extends State<RegistroScreen> {
   String _gradoSeleccionado = gradosDisponibles.first;
 
   Future<void> _registrarse() async {
-    if (_emailController.text.trim().isEmpty ||
-        _passwordController.text.trim().isEmpty ||
-        _nombreController.text.trim().isEmpty) {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final nombre = _nombreController.text.trim();
+
+    if (email.isEmpty || password.isEmpty || nombre.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor, rellena todos los campos.')),
+      );
+      return;
+    }
+
+    if (!_isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, introduce un email válido.')),
       );
       return;
     }
@@ -49,8 +63,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
     setState(() => _isLoading = true);
     try {
       final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+        email: email,
+        password: password,
       );
 
       if (mounted && credential.user != null) {
@@ -118,6 +132,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 const SizedBox(height: 15),
                 TextField(
                   controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.email, color: Colors.white70),
                     hintText: 'Email',
